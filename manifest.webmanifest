@@ -1,0 +1,35 @@
+{
+  "name": "API 一站式 · 密钥手账",
+  "short_name": "密钥手账",
+  "description": "把聊天、生图、语音、视频、搜索的 API 密钥收进同一本手账，中转站一键跳转，数据只存在本地。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "portrait-primary",
+  "background_color": "#FBF7F0",
+  "theme_color": "#FBF7F0",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
