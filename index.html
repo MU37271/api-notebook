@@ -672,6 +672,70 @@
             border-color: transparent;
         }
 
+        .btn--cancel {
+            background: #fff;
+            color: var(--ink-mid);
+            border: 1.5px solid var(--line);
+            box-shadow: none;
+        }
+
+        .btn--cancel:hover {
+            background: var(--paper-warm);
+            border-color: var(--ink-soft);
+            box-shadow: none;
+            transform: translateY(-1px);
+        }
+
+        /* search */
+        .search {
+            position: relative;
+            display: flex;
+            align-items: center;
+            margin-bottom: var(--s3);
+        }
+
+        .search__icon {
+            position: absolute;
+            left: 14px;
+            font-size: 14px;
+            opacity: .55;
+            pointer-events: none;
+        }
+
+        .search input {
+            width: 100%;
+            background: #fff;
+            border: 1.5px solid var(--line);
+            border-radius: 999px;
+            padding: 11px 40px 11px 38px;
+            font-size: 14px;
+        }
+
+        .search input::-webkit-search-cancel-button { display: none; }
+
+        .search input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 4px rgba(224, 141, 123, .12);
+        }
+
+        .search__clear {
+            position: absolute;
+            right: 10px;
+            width: 24px;
+            height: 24px;
+            border: none;
+            border-radius: 50%;
+            background: var(--paper-warm);
+            color: var(--ink-mid);
+            font-size: 11px;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            transition: background .16s ease;
+        }
+
+        .search__clear:hover { background: var(--pink); }
+
         /* ============================================================
            8. Shelf: heading + filters
            ============================================================ */
@@ -691,6 +755,14 @@
             font-size: 21px;
             font-weight: 800;
             letter-spacing: -.02em;
+        }
+
+        .shelf__tools {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
 
         .count-pill {
@@ -913,9 +985,33 @@
         .card__foot {
             display: flex;
             justify-content: flex-end;
+            flex-wrap: wrap;
+            gap: 6px;
             margin-top: var(--s3);
             padding-top: var(--s3);
             border-top: 1px dashed var(--line-soft);
+        }
+
+        /* pinned marker */
+        .card__pin {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 800;
+            color: #97863F;
+            background: var(--butter);
+            border-radius: 7px;
+            padding: 3px 9px;
+            margin: 0 0 10px 6px;
+            transform: rotate(1.5deg);
+            box-shadow: 0 1px 2px rgba(75, 69, 60, .08);
+        }
+
+        .mini-btn--on {
+            background: var(--butter);
+            border-color: #D9C77E;
+            color: #8A7A34;
         }
 
         /* ============================================================
@@ -994,6 +1090,43 @@
             opacity: 1;
             transform: translate(-50%, 0) rotate(-1.5deg);
         }
+
+        /* 新版本提示条 */
+        .update-bar {
+            position: fixed;
+            left: 50%;
+            bottom: calc(26px + env(safe-area-inset-bottom));
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: #fff;
+            border: 1.5px solid var(--accent);
+            color: var(--ink);
+            font-size: 13.5px;
+            font-weight: 700;
+            padding: 10px 12px 10px 20px;
+            border-radius: 999px;
+            box-shadow: 0 10px 28px rgba(75, 69, 60, .18);
+            z-index: 2100;
+            white-space: nowrap;
+        }
+
+        .update-bar[hidden] { display: none; }
+
+        .update-bar button {
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 800;
+            color: #fff;
+            background: var(--accent);
+            border: none;
+            border-radius: 999px;
+            padding: 7px 16px;
+            cursor: pointer;
+        }
+
+        .update-bar button:hover { background: var(--accent-dk); }
 
         /* ============================================================
            13. Focus + motion
@@ -1118,8 +1251,8 @@
                     <span class="tape tape--pink" aria-hidden="true"></span>
                     <span class="tape tape--sky" aria-hidden="true"></span>
 
-                    <h2>贴一张新卡片</h2>
-                    <p class="form-card__hint">先选好分类，再填名称和密钥，最后按下「收进手账」。</p>
+                    <h2 id="formTitle">贴一张新卡片</h2>
+                    <p class="form-card__hint" id="formHint">先选好分类，再填名称和密钥，最后按下「收进手账」。</p>
 
                     <form id="addForm" novalidate>
                         <div class="cat-picker" id="catPicker" role="group" aria-label="选择分类"></div>
@@ -1151,8 +1284,9 @@
                             </div>
 
                             <div class="form-actions">
-                                <button type="submit" class="btn">📎 收进手账</button>
-                                <span class="form-actions__note">数据保存在这台设备的浏览器里</span>
+                                <button type="submit" class="btn" id="submitBtn">📎 收进手账</button>
+                                <button type="button" class="btn btn--cancel" id="cancelEdit" hidden>取消编辑</button>
+                                <span class="form-actions__note" id="formNote">数据保存在这台设备的浏览器里</span>
                             </div>
                         </div>
                     </form>
@@ -1163,7 +1297,19 @@
             <section class="shelf wrap">
                 <div class="shelf__head">
                     <h2>手账收录夹</h2>
-                    <span class="count-pill" id="totalCount">0 张卡片</span>
+                    <div class="shelf__tools">
+                        <span class="count-pill" id="totalCount">0 张卡片</span>
+                        <button type="button" class="mini-btn" id="btnExport">⬇ 导出备份</button>
+                        <button type="button" class="mini-btn" id="btnImport">⬆ 导入备份</button>
+                        <input type="file" id="importFile" accept="application/json,.json" hidden>
+                    </div>
+                </div>
+
+                <div class="search">
+                    <span class="search__icon" aria-hidden="true">🔍</span>
+                    <input type="search" id="searchInput" placeholder="搜索名称、地址、备注…"
+                           autocomplete="off" aria-label="搜索卡片">
+                    <button type="button" class="search__clear" id="searchClear" hidden aria-label="清空搜索">✕</button>
                 </div>
 
                 <nav class="filters" id="filters" aria-label="按分类筛选"></nav>
@@ -1181,6 +1327,11 @@
                 </p>
             </div>
         </footer>
+    </div>
+
+    <div class="update-bar" id="updateBar" hidden>
+        <span>✨ 有新版本可用</span>
+        <button type="button" id="updateReload">刷新</button>
     </div>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
@@ -1212,6 +1363,8 @@
         var formCategory = 'chat';
         var activeFilter = 'all';
         var revealed = {};   // id -> true, 密钥是否明文显示
+        var editingId = null;   // 正在编辑的卡片 id；null = 新增模式
+        var searchQuery = '';   // 搜索关键词（小写）
 
         /* =========================================================
            Storage
@@ -1231,9 +1384,10 @@
                 return [];
             }
             if (!Array.isArray(list)) return [];
-            // 兼容旧数据：补上 category
+            // 兼容旧数据：补上 category 和 pinned
             return list.map(function (it) {
                 if (!it.category || !byId[it.category]) it.category = 'other';
+                it.pinned = !!it.pinned;
                 return it;
             });
         }
@@ -1400,28 +1554,58 @@
                 ? '<div class="note"><span class="note__k">备注</span>' + esc(item.notes) + '</div>'
                 : '';
 
+            var pinFlag = item.pinned
+                ? '<span class="card__pin"><span aria-hidden="true">📌</span>置顶</span>'
+                : '';
+
             return '<article class="card" style="--cat:' + cat.color + ';--cat-ink:' + cat.ink + '">' +
                         '<span class="card__tape" aria-hidden="true"></span>' +
                         '<span class="card__cat"><span aria-hidden="true">' + cat.emoji + '</span>' + cat.label + '</span>' +
+                        pinFlag +
                         '<h3 class="card__name">' + esc(item.name) + '</h3>' +
                         inner + note +
                         '<div class="card__foot">' +
+                            '<button type="button" class="mini-btn' + (item.pinned ? ' mini-btn--on' : '') + '"' +
+                                ' data-action="pin" data-id="' + item.id + '"' +
+                                ' aria-pressed="' + (item.pinned ? 'true' : 'false') + '">' +
+                                (item.pinned ? '取消置顶' : '📌 置顶') + '</button>' +
+                            '<button type="button" class="mini-btn" data-action="edit" data-id="' + item.id + '">编辑</button>' +
                             '<button type="button" class="mini-btn mini-btn--ghost" data-action="delete" data-id="' + item.id + '" aria-label="删除 ' + esc(item.name) + '">删除 ✕</button>' +
                         '</div>' +
                     '</article>';
         }
 
+        function matchesSearch(item, q) {
+            if (!q) return true;
+            var cat = byId[item.category] || byId.other;
+            var hay = [
+                item.name, item.webUrl, item.apiUrl, item.notes, cat.label
+            ].join(' ').toLowerCase();
+            return hay.indexOf(q) !== -1;
+        }
+
         function renderCards(list) {
             var host = document.getElementById('cards');
 
-            var visible = activeFilter === 'all'
-                ? list
-                : list.filter(function (it) { return it.category === activeFilter; });
+            var visible = list.filter(function (it) {
+                if (activeFilter !== 'all' && it.category !== activeFilter) return false;
+                return matchesSearch(it, searchQuery);
+            });
+
+            // 置顶的排前面（sort 稳定，其余保持原有顺序）
+            visible.sort(function (a, b) {
+                return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
+            });
 
             if (visible.length === 0) {
-                var msg = list.length === 0
-                    ? ['🗂️', '手账还是空的', '在上面贴一张新卡片，开始收录吧']
-                    : ['🔍', '这个分类还没有卡片', '换个分类看看，或者新贴一张'];
+                var msg;
+                if (list.length === 0) {
+                    msg = ['🗂️', '手账还是空的', '在上面贴一张新卡片，开始收录吧'];
+                } else if (searchQuery) {
+                    msg = ['🔍', '没有找到匹配的卡片', '换个关键词试试'];
+                } else {
+                    msg = ['🔍', '这个分类还没有卡片', '换个分类看看，或者新贴一张'];
+                }
                 host.innerHTML = '<div class="empty">' +
                     '<span class="empty__emoji" aria-hidden="true">' + msg[0] + '</span>' +
                     '<p>' + msg[1] + '</p>' +
@@ -1436,6 +1620,7 @@
         function render() {
             var list = load();
             document.getElementById('totalCount').textContent = list.length + ' 张卡片';
+            document.getElementById('searchClear').hidden = !searchQuery;
             renderFilters(list);
             renderCards(list);
         }
@@ -1490,15 +1675,71 @@
                 return;
             }
 
+            if (action === 'pin') {
+                var idx = list.indexOf(item);
+                if (idx > -1) {
+                    list[idx].pinned = !list[idx].pinned;
+                    save(list);
+                    render();
+                    toast(list[idx].pinned ? '已置顶' : '已取消置顶');
+                }
+                return;
+            }
+
+            if (action === 'edit') {
+                startEdit(item);
+                return;
+            }
+
             if (action === 'delete') {
                 if (!confirm('删除「' + item.name + '」这条记录？此操作无法撤销。')) return;
                 var next = list.filter(function (it) { return it.id !== id; });
                 delete revealed[id];
                 save(next);
+                if (editingId === id) exitEdit();
                 render();
                 toast('已删除');
             }
         });
+
+        /* =========================================================
+           编辑模式
+           ========================================================= */
+        function startEdit(item) {
+            editingId = item.id;
+            formCategory = item.category;
+
+            document.getElementById('f-name').value = item.name || '';
+            document.getElementById('f-web').value  = item.webUrl || '';
+            document.getElementById('f-api').value  = item.apiUrl || '';
+            document.getElementById('f-key').value  = item.apiKey || '';
+            document.getElementById('f-note').value = item.notes || '';
+
+            document.getElementById('formTitle').textContent = '编辑这张卡片';
+            document.getElementById('formHint').textContent = '改完点「保存修改」，按「取消编辑」放弃改动。';
+            document.getElementById('submitBtn').textContent = '💾 保存修改';
+            document.getElementById('formNote').textContent = '修改会覆盖原卡片';
+            document.getElementById('cancelEdit').hidden = false;
+
+            renderCatPicker();
+
+            var card = document.querySelector('.form-card');
+            if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.getElementById('f-name').focus();
+            toast('正在编辑「' + item.name + '」');
+        }
+
+        function exitEdit() {
+            editingId = null;
+            var form = document.getElementById('addForm');
+            if (form) form.reset();
+
+            document.getElementById('formTitle').textContent = '贴一张新卡片';
+            document.getElementById('formHint').textContent = '先选好分类，再填名称和密钥，最后按下「收进手账」。';
+            document.getElementById('submitBtn').textContent = '📎 收进手账';
+            document.getElementById('formNote').textContent = '数据保存在这台设备的浏览器里';
+            document.getElementById('cancelEdit').hidden = true;
+        }
 
         /* =========================================================
            Submit
@@ -1517,6 +1758,35 @@
             if (!key)  { document.getElementById('f-key').focus();  toast('请填写 API 密钥'); return; }
 
             var list = load();
+
+            /* —— 编辑模式：更新原卡片 —— */
+            if (editingId !== null) {
+                var changed = false;
+                for (var i = 0; i < list.length; i++) {
+                    if (list[i].id === editingId) {
+                        list[i].category = formCategory;
+                        list[i].name = name;
+                        list[i].webUrl = web;
+                        list[i].apiUrl = api;
+                        list[i].apiKey = key;
+                        list[i].notes = note;
+                        changed = true;
+                        break;
+                    }
+                }
+                if (changed) {
+                    save(list);
+                    exitEdit();
+                    render();
+                    toast('修改已保存');
+                } else {
+                    exitEdit();
+                    toast('原卡片已不存在，改动未保存');
+                }
+                return;
+            }
+
+            /* —— 新增模式 —— */
             list.unshift({
                 id: Date.now(),
                 category: formCategory,
@@ -1525,6 +1795,7 @@
                 apiUrl: api,
                 apiKey: key,
                 notes: note,
+                pinned: false,
                 createdAt: new Date().toISOString()
             });
             save(list);
@@ -1545,21 +1816,185 @@
         });
 
         /* =========================================================
+           取消编辑
+           ========================================================= */
+        document.getElementById('cancelEdit').addEventListener('click', function () {
+            exitEdit();
+            render();
+            toast('已取消编辑');
+        });
+
+        /* =========================================================
+           搜索
+           ========================================================= */
+        var searchInput = document.getElementById('searchInput');
+
+        searchInput.addEventListener('input', function () {
+            searchQuery = this.value.trim().toLowerCase();
+            render();
+        });
+
+        document.getElementById('searchClear').addEventListener('click', function () {
+            searchInput.value = '';
+            searchQuery = '';
+            render();
+            searchInput.focus();
+        });
+
+        /* =========================================================
+           导出 / 导入备份
+           ========================================================= */
+        function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+        function exportBackup() {
+            var list = load();
+            var payload = {
+                app: 'api-notebook',
+                version: 1,
+                exportedAt: new Date().toISOString(),
+                items: list
+            };
+            var text = JSON.stringify(payload, null, 2);
+
+            var d = new Date();
+            var stamp = d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
+            var filename = 'api-handbook-' + stamp + '.json';
+
+            try {
+                var blob = new Blob([text], { type: 'application/json' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.rel = 'noopener';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+                toast('已导出 ' + list.length + ' 张卡片');
+            } catch (e) {
+                // 下载不可用时退回复制到剪贴板
+                copy(text, '备份内容');
+            }
+        }
+
+        function importBackup(file) {
+            var reader = new FileReader();
+
+            reader.onload = function () {
+                var data;
+                try {
+                    data = JSON.parse(String(reader.result));
+                } catch (e) {
+                    toast('导入失败：不是有效的 JSON');
+                    return;
+                }
+
+                var incoming = Array.isArray(data) ? data : (data && data.items);
+                if (!Array.isArray(incoming)) {
+                    toast('导入失败：文件里没有卡片数据');
+                    return;
+                }
+
+                var list = load();
+                var index = {};
+                for (var i = 0; i < list.length; i++) index[list[i].id] = i;
+
+                var added = 0, updated = 0, skipped = 0;
+
+                incoming.forEach(function (raw, k) {
+                    if (!raw || typeof raw !== 'object') { skipped++; return; }
+
+                    var nm = String(raw.name == null ? '' : raw.name).trim();
+                    var ak = String(raw.apiKey == null ? '' : raw.apiKey).trim();
+                    if (!nm && !ak) { skipped++; return; }
+
+                    var item = {
+                        id: Number(raw.id) || (Date.now() + k),
+                        category: byId[raw.category] ? raw.category : 'other',
+                        name: nm || '未命名',
+                        webUrl: String(raw.webUrl == null ? '' : raw.webUrl).trim(),
+                        apiUrl: String(raw.apiUrl == null ? '' : raw.apiUrl).trim(),
+                        apiKey: String(raw.apiKey == null ? '' : raw.apiKey),
+                        notes: String(raw.notes == null ? '' : raw.notes).trim(),
+                        pinned: !!raw.pinned,
+                        createdAt: raw.createdAt || new Date().toISOString()
+                    };
+
+                    if (index[item.id] !== undefined) {
+                        list[index[item.id]] = item;
+                        updated++;
+                    } else {
+                        index[item.id] = list.length;
+                        list.push(item);
+                        added++;
+                    }
+                });
+
+                if (added === 0 && updated === 0) {
+                    toast('没有可导入的卡片');
+                    return;
+                }
+
+                save(list);
+                render();
+                toast('导入完成：新增 ' + added + '，更新 ' + updated + (skipped ? '，跳过 ' + skipped : ''));
+            };
+
+            reader.onerror = function () { toast('读取文件失败'); };
+            reader.readAsText(file);
+        }
+
+        document.getElementById('btnExport').addEventListener('click', exportBackup);
+
+        document.getElementById('btnImport').addEventListener('click', function () {
+            document.getElementById('importFile').click();
+        });
+
+        document.getElementById('importFile').addEventListener('change', function () {
+            var f = this.files && this.files[0];
+            this.value = '';          // 允许连续选同一个文件
+            if (f) importBackup(f);
+        });
+
+        /* =========================================================
            Boot
            ========================================================= */
         renderCatPicker();
         render();
 
         /* =========================================================
-           PWA: 注册 Service Worker（仅在 http/https 下生效）
+           PWA: 注册 Service Worker + 新版本提示
            ========================================================= */
         if ('serviceWorker' in navigator && location.protocol !== 'file:') {
             window.addEventListener('load', function () {
-                navigator.serviceWorker.register('./service-worker.js').catch(function () {
+                navigator.serviceWorker.register('./service-worker.js').then(function (reg) {
+                    reg.addEventListener('updatefound', function () {
+                        var nw = reg.installing;
+                        if (!nw) return;
+                        nw.addEventListener('statechange', function () {
+                            // 已有旧版本在跑，且新版本装好了 → 提示刷新
+                            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                                document.getElementById('updateBar').hidden = false;
+                            }
+                        });
+                    });
+
+                    // 每次回到前台检查一次更新
+                    document.addEventListener('visibilitychange', function () {
+                        if (document.visibilityState === 'visible') {
+                            reg.update().catch(function () {});
+                        }
+                    });
+                }).catch(function () {
                     /* 注册失败不影响正常使用 */
                 });
             });
         }
+
+        document.getElementById('updateReload').addEventListener('click', function () {
+            location.reload();
+        });
     })();
     </script>
 </body>

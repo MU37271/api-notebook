@@ -5,7 +5,7 @@
    改动页面后把 VERSION 改一下，旧缓存会自动清掉。
 */
 
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE = 'api-notebook-' + VERSION;
 
 const PRECACHE = [
